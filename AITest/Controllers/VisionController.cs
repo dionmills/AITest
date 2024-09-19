@@ -2,14 +2,18 @@ using AITest.Helpers;
 using AITest.Services;
 using Azure.AI.Vision.ImageAnalysis;
 using Azure.Identity;
+using Hackathon.AI.Models.Api;
 using Hackathon.AI.Models.Settings;
+using Hackathon.AI.OpenAI;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
+using System.Diagnostics.Eventing.Reader;
 using System.Net;
+using System.Text.Json;
 
 namespace AITest.Controllers;
 
@@ -22,11 +26,13 @@ public class VisionController : ControllerBase
     private readonly ChatHistoryService _chatHistoryService;
     private readonly IOptions<OpenAISettings> _settings;
     private readonly AzureVisionHelper _vision;
+    private readonly VideoRetrievalService _videoRetrievalService;
 
-    public VisionController(ChatHistoryService chatHistoryService,IOptions<OpenAISettings> settings, AzureVisionHelper vision)
+    public VisionController(ChatHistoryService chatHistoryService,IOptions<OpenAISettings> settings, AzureVisionHelper vision, VideoRetrievalService videoRetrievalService)
     {
         _settings = settings;
         _vision = vision;
+        _videoRetrievalService = videoRetrievalService;
     }
 
 
@@ -37,9 +43,45 @@ public class VisionController : ControllerBase
         return Ok(result);
     }
     [HttpPost("Video")]
-    public IActionResult Video([FromForm] FormFileCollection video)
+    public async Task<IActionResult> Video(string videoUrl = "https://tmpfiles.org/dl/13027223/wvideo.mp4")
     {
-        ImageAnalysisResult result = _vision.AnalyseVideo(video);
+        string injestion = Guid.NewGuid().ToString("N");
+        IEnumerable<Hackathon.AI.Models.Api.GetIngestionIndexResponseModel> indexes = await _videoRetrievalService.ListIndexes();
+        GetIngestionIndexResponseModel index = indexes.First();
+        var result = _videoRetrievalService.AddVideoToIndex(index, videoUrl, "w.mp4",injestion);
+        //IEnumerable<ImageAnalysisResult> result = await _vision.AnalyseVideo(video);
+        await Task.Delay(1000);
+        bool finished = false;
+        while (!finished)
+        {
+            IEnumerable<VideoIndexStateModel> status = await _videoRetrievalService.WaitForInjestionToComplete(index, injestion);
+            var state = status.FirstOrDefault(s => s.Name == injestion);
+            if (state != null)
+            {
+                if (state.State == "Completed")
+                {
+                    return Ok(new 
+                    { 
+                        Index = index.Name,
+                        State = state 
+                    });
+                } else if (state.State == "Failed")
+                {
+                    return Problem(JsonSerializer.Serialize(state));
+                }
+            } else
+            {
+                return NotFound($"Injestion {injestion} was not found");
+            }
+            await Task.Delay(3000);
+        }
+        return Problem("Something went wrong");
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> QueryVideo(string queryText, string indexName )
+    {
+        IEnumerable<VisionQueryResponseModel> result = await _videoRetrievalService.SearchWithVisionFeature(indexName, queryText);
         return Ok(result);
     }
 }
