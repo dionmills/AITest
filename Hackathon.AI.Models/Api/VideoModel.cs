@@ -13,7 +13,10 @@ namespace Hackathon.AI.Models.Api
         public string CameraId { get; set; }
 
         [JsonPropertyName("timestamp")]
-        public string Timestamp { get; set; }
+        public DateTime Timestamp { get; set; }
+
+        [JsonPropertyName("documentId")]
+        public string DocumentId { get; set; }
     }
 
     public class VideoRequestModel

@@ -46,9 +46,9 @@ public class VisionController : ControllerBase
     public async Task<IActionResult> Video(string videoUrl = "https://tmpfiles.org/dl/13027223/wvideo.mp4")
     {
         string injestion = Guid.NewGuid().ToString("N");
-        IEnumerable<Hackathon.AI.Models.Api.GetIngestionIndexResponseModel> indexes = await _videoRetrievalService.ListIndexes();
-        GetIngestionIndexResponseModel index = indexes.First();
-        var result = _videoRetrievalService.AddVideoToIndex(index, videoUrl, "w.mp4",injestion);
+        IEnumerable<Hackathon.AI.Models.Api.IngestionIndexModel> indexes = await _videoRetrievalService.ListIndexes();
+        IngestionIndexModel index = indexes.First();
+        KeyValuePair<VideoMetadata, VideoIndexStateModel> result = await _videoRetrievalService.AddVideoToIndex(index, videoUrl, injestion, injestion);
         //IEnumerable<ImageAnalysisResult> result = await _vision.AnalyseVideo(video);
         await Task.Delay(1000);
         bool finished = false;
@@ -63,7 +63,8 @@ public class VisionController : ControllerBase
                     return Ok(new 
                     { 
                         Index = index.Name,
-                        State = state 
+                        State = state,
+                        MetaData = result.Key
                     });
                 } else if (state.State == "Failed")
                 {
@@ -82,8 +83,8 @@ public class VisionController : ControllerBase
     public async Task<IActionResult> InjestionStatus()
     {
         string injestion = Guid.NewGuid().ToString("N");
-        IEnumerable<Hackathon.AI.Models.Api.GetIngestionIndexResponseModel> indexes = await _videoRetrievalService.ListIndexes();
-        GetIngestionIndexResponseModel index = indexes.First();
+        IEnumerable<Hackathon.AI.Models.Api.IngestionIndexModel> indexes = await _videoRetrievalService.ListIndexes();
+        IngestionIndexModel index = indexes.First();
         return Ok(await _videoRetrievalService.WaitForInjestionToComplete(index, injestion));
     }
     [HttpGet("IndexList")]
@@ -94,16 +95,23 @@ public class VisionController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> QueryVideo(string queryText, string indexName )
+    public async Task<IActionResult> QueryVideo(string queryText, string indexName, string documentId )
     {
         try
         {
-            IEnumerable<VisionQueryResponseModel> result = await _videoRetrievalService.SearchWithVisionFeature(queryText, indexName);
+            IEnumerable<VisionQueryResponseModel> result = await _videoRetrievalService.SearchWithVisionFeature(queryText, indexName, documentId);
             return Ok(result);
         }
         catch (Exception ex)
         {
             return BadRequest(ex.Message);
         }
+    }
+
+    [HttpPost("Index")]
+    public async Task<IActionResult> CreateIndex(string indexName)
+    {
+        return Ok(await _videoRetrievalService.CreateIndex(indexName));
+
     }
 }

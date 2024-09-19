@@ -20,7 +20,7 @@ namespace Hackathon.AI.OpenAI
         { 
             _settings = settings.Value;
         }
-        public async Task<IEnumerable<GetIngestionIndexResponseModel>> ListIndexes()
+        public async Task<IEnumerable<IngestionIndexModel>> ListIndexes()
         {
 
             HttpClient client = new HttpClient()
@@ -28,30 +28,25 @@ namespace Hackathon.AI.OpenAI
                 BaseAddress = new Uri(_settings.Endpoint)
             };
             client.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", _settings.Key);
-            var result = await client.GetFromJsonAsync<ApiResponse<IEnumerable<GetIngestionIndexResponseModel>>>
+            var result = await client.GetFromJsonAsync<ApiResponse<IEnumerable<IngestionIndexModel>>>
                 ($"/computervision/retrieval/indexes?api-version={_settings.ApiVersion}");
             return result.Value;
         }
-        public async Task<IEnumerable<GetIngestionIndexResponseModel>> CreateIndex(string indexName)
-        {
-            // TODO: not finished
-            HttpClient client = new HttpClient()
-            {
-                BaseAddress = new Uri(_settings.Endpoint)
-            };
-            client.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", _settings.Key);
-            var result = await client.GetFromJsonAsync<ApiResponse<IEnumerable<GetIngestionIndexResponseModel>>>
-                ($"/retrieval/indexes/{indexName}?api-version={_settings.ApiVersion}");
-            return result.Value;
-        }
 
-        public async Task<VideoIndexStateModel> AddVideoToIndex(GetIngestionIndexResponseModel index, string videoUrl, string filename = "unknown", string injestion = "my-injestion")
+        public async Task<KeyValuePair<VideoMetadata, VideoIndexStateModel>> AddVideoToIndex(IngestionIndexModel index, string videoUrl, string filename = "unknown", string injestion = "my-injestion")
         {
             HttpClient client = new HttpClient()
             {
                 BaseAddress = new Uri(_settings.Endpoint)
             };
             client.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", _settings.Key);
+            VideoMetadata videoMetadata = new VideoMetadata
+            {
+                CameraId = $"1",
+                Timestamp = DateTime.Now,
+                DocumentId = filename
+            };
+
             VideoRequestModel model =
                 new VideoRequestModel
                 {
@@ -61,11 +56,7 @@ namespace Hackathon.AI.OpenAI
                     {
                          DocumentId = filename,
                          DocumentUrl = videoUrl,
-                          Metadata = new VideoMetadata
-                          {
-                               CameraId = "1",
-                                Timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
-                          }
+                          Metadata = videoMetadata
                     }
                 }
                 };
@@ -75,10 +66,60 @@ namespace Hackathon.AI.OpenAI
                 $"/computervision/retrieval/indexes/{index.Name}/ingestions/{injestion}?api-version={_settings.ApiVersion}")
                 { Content = content });
             var ret = await result.Content.ReadFromJsonAsync<VideoIndexStateModel>();
+            return new KeyValuePair<VideoMetadata, VideoIndexStateModel>(videoMetadata, ret);
+        }
+
+
+        public async Task<IngestionIndexModel> CreateIndex(string indexName)
+        {
+            HttpClient client = new HttpClient()
+            {
+                BaseAddress = new Uri(_settings.Endpoint)
+            };
+            client.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", _settings.Key);
+            
+
+            CreateIndexModel model =
+                new CreateIndexModel
+                {
+                     MetadataSchema = new MetadataSchemaModel
+                     {
+                          Fields = new List<MetadataSchemaFieldModel>
+                          {
+                              new MetadataSchemaFieldModel
+                              {
+                                    Name = "cameraId",
+                                    Searchable = false,
+                                     Filterable = true,
+                                     Type = "string"
+                              },
+                              new MetadataSchemaFieldModel
+                              {
+                                  Name = "timestamp",
+                                  Searchable = false,
+                                  Filterable = true,
+                                  Type = "datetime"
+                              }, 
+                              new MetadataSchemaFieldModel
+                              {
+                                  Name = "documentId",
+                                  Searchable = false,
+                                  Filterable = true,
+                                  Type = "string"
+                              }
+                          }
+                     }
+                };
+            StringContent content = new StringContent(JsonSerializer.Serialize(model), Encoding.UTF8, "application/json");
+            HttpResponseMessage result = await client.SendAsync(
+                new HttpRequestMessage(HttpMethod.Put,
+                $"/computervision/retrieval/indexes/{indexName}?api-version={_settings.ApiVersion}")
+                { Content = content });
+            var ret = await result.Content.ReadFromJsonAsync<IngestionIndexModel>();
             return ret;
         }
 
-        public async Task<IEnumerable<VideoIndexStateModel>> WaitForInjestionToComplete(GetIngestionIndexResponseModel index, string injestion)
+        public async Task<IEnumerable<VideoIndexStateModel>> WaitForInjestionToComplete(IngestionIndexModel index, string injestion)
         {
             HttpClient client = new HttpClient()
             {
@@ -90,7 +131,7 @@ namespace Hackathon.AI.OpenAI
             return result.Value;
         }
 
-        public async Task<IEnumerable<VisionQueryResponseModel>> SearchWithVisionFeature(string queryText, string indexName = "my-video-index")
+        public async Task<IEnumerable<VisionQueryResponseModel>> SearchWithVisionFeature(string queryText, string indexName, string documentId)
         {
             HttpClient client = new HttpClient()
             {
@@ -105,10 +146,15 @@ namespace Hackathon.AI.OpenAI
                        FeatureFilters = new List<string> { "vision" },
                         StringFilters = new List<VisionStringFilter>
                         {
+                            //new VisionStringFilter
+                            //{
+                            //     FieldName = "cameraid",
+                            //     Values = new List<string>{cameraId}
+                            //},
                             new VisionStringFilter
                             {
-                                 FieldName = "cameraId",
-                                 Values = new List<string>{"1"}
+                                 FieldName = "documentid",
+                                 Values = new List<string>{documentId}
                             }
                         }
                   },
@@ -118,7 +164,10 @@ namespace Hackathon.AI.OpenAI
             StringContent content = new StringContent(stringBody, Encoding.UTF8, "application/json");
             HttpResponseMessage result = await client.SendAsync(
                 new HttpRequestMessage(HttpMethod.Post,
-                $"/computervision/retrieval/indexes/{indexName}:queryByText?api-version={_settings.ApiVersion}"));
+                $"/computervision/retrieval/indexes/{indexName}:queryByText?api-version={_settings.ApiVersion}")
+                {
+                    Content = content
+                });
             try
             {
                 result.EnsureSuccessStatusCode();

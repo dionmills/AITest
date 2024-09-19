@@ -9,6 +9,6 @@ namespace Hackathon.AI.Models.Api
     public class MetadataSchemaModel
     {
         public string Language { get; set; }
-        public IEnumerable<MetadataSchemaFieldModel> Fields { get; set; }
+        public List<MetadataSchemaFieldModel> Fields { get; set; }
     }
 }
