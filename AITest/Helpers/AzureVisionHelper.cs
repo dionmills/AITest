@@ -28,9 +28,10 @@ namespace AITest.Helpers
 
             return result;
         }
-        public ImageAnalysisResult AnalyseImage(FileStream stream)
+        public ImageAnalysisResult AnalyseImage(FormFileCollection stream)
         {
-            BinaryData bin = BinaryData.FromStream(stream);
+            Stream FileStream = stream.First().OpenReadStream();
+            BinaryData bin = BinaryData.FromStream(FileStream);
             string endpoint = _settings.Endpoint;
             string key = _settings.Key;
 
@@ -40,7 +41,9 @@ namespace AITest.Helpers
 
             ImageAnalysisResult result = client.Analyze(
                 bin,
-                VisualFeatures.Caption | VisualFeatures.Read,
+                VisualFeatures.Caption
+                | VisualFeatures.Read
+                | VisualFeatures.Tags,
                 new ImageAnalysisOptions { GenderNeutralCaption = true });
 
             return result;

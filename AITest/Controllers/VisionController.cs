@@ -30,8 +30,8 @@ public class VisionController : ControllerBase
     }
 
 
-    [HttpPost]
-    public IActionResult Post([FromBody]FileStream image)
+    [HttpPost("Image")]
+    public IActionResult Image([FromForm]FormFileCollection image)
     {
         ImageAnalysisResult result = _vision.AnalyseImage(image);
         return Ok(result);
