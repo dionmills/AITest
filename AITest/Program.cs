@@ -3,6 +3,7 @@ using AITest.Services;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
 using Hackathon.AI.Models.Settings;
+using AITest.Helpers;
 
 namespace AITest;
 
@@ -24,6 +25,7 @@ public class Program
 
         //builder.Services.AddTransient((serviceProvider) => new Kernel(serviceProvider));
         builder.Services.AddSingleton<ChatHistoryService>();
+        builder.Services.AddTransient<AzureVisionHelper>();
         builder.Services.Configure<OpenAISettings>(builder.Configuration.GetSection("OpenAI"));
 
         builder.Services.AddEndpointsApiExplorer();
