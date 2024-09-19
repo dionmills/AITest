@@ -25,7 +25,7 @@ public class ChatController : ControllerBase
         IKernelBuilder kernelBuilder = Kernel.CreateBuilder();
         kernelBuilder.AddAzureOpenAIChatCompletion(
             deploymentName: "gpt-4o"
-            , apiKey: "403a8f4f895d4326bfd04e6a5676c226"
+            , apiKey: apiKey
             , endpoint: "https://hackathon20240402694327.openai.azure.com/"
             , modelId: "gpt-4o"
             , httpClient: client
