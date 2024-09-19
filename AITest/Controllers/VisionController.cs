@@ -78,10 +78,32 @@ public class VisionController : ControllerBase
         return Problem("Something went wrong");
     }
 
+    [HttpGet("InjestionStatus")]
+    public async Task<IActionResult> InjestionStatus()
+    {
+        string injestion = Guid.NewGuid().ToString("N");
+        IEnumerable<Hackathon.AI.Models.Api.GetIngestionIndexResponseModel> indexes = await _videoRetrievalService.ListIndexes();
+        GetIngestionIndexResponseModel index = indexes.First();
+        return Ok(await _videoRetrievalService.WaitForInjestionToComplete(index, injestion));
+    }
+    [HttpGet("IndexList")]
+    public async Task<IActionResult> GetIndexList()
+    {
+        string injestion = Guid.NewGuid().ToString("N");
+        return Ok(await _videoRetrievalService.ListIndexes());
+    }
+
     [HttpGet]
     public async Task<IActionResult> QueryVideo(string queryText, string indexName )
     {
-        IEnumerable<VisionQueryResponseModel> result = await _videoRetrievalService.SearchWithVisionFeature(indexName, queryText);
-        return Ok(result);
+        try
+        {
+            IEnumerable<VisionQueryResponseModel> result = await _videoRetrievalService.SearchWithVisionFeature(queryText, indexName);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(ex.Message);
+        }
     }
 }

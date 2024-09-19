@@ -90,7 +90,7 @@ namespace Hackathon.AI.OpenAI
             return result.Value;
         }
 
-        public async Task<IEnumerable<VisionQueryResponseModel>> SearchWithVisionFeature(string indexName, string queryText)
+        public async Task<IEnumerable<VisionQueryResponseModel>> SearchWithVisionFeature(string queryText, string indexName = "my-video-index")
         {
             HttpClient client = new HttpClient()
             {
@@ -114,11 +114,18 @@ namespace Hackathon.AI.OpenAI
                   },
                    QueryText = queryText
                 };
-            StringContent content = new StringContent(JsonSerializer.Serialize(model), Encoding.UTF8, "application/json");
+            string stringBody = JsonSerializer.Serialize(model);
+            StringContent content = new StringContent(stringBody, Encoding.UTF8, "application/json");
             HttpResponseMessage result = await client.SendAsync(
                 new HttpRequestMessage(HttpMethod.Post,
-                $"/computervision/retrieval/indexes/{indexName}:queryByText?api-version={_settings.ApiVersion}")
-                { Content = content });
+                $"/computervision/retrieval/indexes/{indexName}:queryByText?api-version={_settings.ApiVersion}"));
+            try
+            {
+                result.EnsureSuccessStatusCode();
+            } catch (Exception ex) {
+                throw new Exception($"\"error\": {await result.Content.ReadAsStringAsync()}  \"Body\": {stringBody}");
+            }
+
             var ret = await result.Content.ReadFromJsonAsync<ApiResponse<IEnumerable<VisionQueryResponseModel>>>();
             return ret.Value;
         }
