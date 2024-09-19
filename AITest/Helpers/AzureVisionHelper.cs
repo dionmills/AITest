@@ -27,20 +27,23 @@ namespace AITest.Helpers
                 new ImageAnalysisOptions { GenderNeutralCaption = true });
 
             return result;
-            //Console.WriteLine("Image analysis results:");
-            //Console.WriteLine(" Caption:");
-            //Console.WriteLine($"   '{result.Caption.Text}', Confidence {result.Caption.Confidence:F4}");
+        }
+        public ImageAnalysisResult AnalyseImage(FileStream stream)
+        {
+            BinaryData bin = BinaryData.FromStream(stream);
+            string endpoint = _settings.Endpoint;
+            string key = _settings.Key;
 
-            //Console.WriteLine(" Read:");
-            //foreach (DetectedTextBlock block in result.Read.Blocks)
-            //    foreach (DetectedTextLine line in block.Lines)
-            //    {
-            //        Console.WriteLine($"   Line: '{line.Text}', Bounding Polygon: [{string.Join(" ", line.BoundingPolygon)}]");
-            //        foreach (DetectedTextWord word in line.Words)
-            //        {
-            //            Console.WriteLine($"     Word: '{word.Text}', Confidence {word.Confidence.ToString("#.####")}, Bounding Polygon: [{string.Join(" ", word.BoundingPolygon)}]");
-            //        }
-            //    }
+            ImageAnalysisClient client = new ImageAnalysisClient(
+                new Uri(endpoint),
+                new AzureKeyCredential(key));
+
+            ImageAnalysisResult result = client.Analyze(
+                bin,
+                VisualFeatures.Caption | VisualFeatures.Read,
+                new ImageAnalysisOptions { GenderNeutralCaption = true });
+
+            return result;
         }
     }
 }
