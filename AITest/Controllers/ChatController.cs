@@ -1,7 +1,9 @@
 using AITest.Helpers;
 using AITest.Services;
 using Azure.Identity;
+using Hackathon.AI.Models.Settings;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using Microsoft.OpenApi;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
@@ -17,15 +19,17 @@ public class ChatController : ControllerBase
     private readonly Kernel _kernel;
     private readonly IChatCompletionService _chatCompletionService;
     private readonly ChatHistoryService _chatHistoryService;
+    private readonly IOptions<OpenAISettings> _settings;
 
-    public ChatController(ChatHistoryService chatHistoryService)
+    public ChatController(ChatHistoryService chatHistoryService,IOptions<OpenAISettings> settings)
     {
+        _settings = settings;
         DelegatingHandler handler = new ApiVersionHandler("2023-03-15-preview");
         var client = new HttpClient();
         IKernelBuilder kernelBuilder = Kernel.CreateBuilder();
         kernelBuilder.AddAzureOpenAIChatCompletion(
             deploymentName: "gpt-4o"
-            , apiKey: apiKey
+            , apiKey: _settings.Value.Key
             , endpoint: "https://hackathon20240402694327.openai.azure.com/"
             , modelId: "gpt-4o"
             , httpClient: client
