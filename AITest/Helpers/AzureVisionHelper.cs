@@ -47,6 +47,7 @@ namespace AITest.Helpers
                 VisualFeatures.Caption
                 | VisualFeatures.Read
                 | VisualFeatures.Tags
+                | VisualFeatures.DenseCaptions
                 | VisualFeatures.Objects
                 | VisualFeatures.People,
                 new ImageAnalysisOptions { GenderNeutralCaption = true });
@@ -61,6 +62,7 @@ namespace AITest.Helpers
             BinaryData bin = BinaryData.FromStream(FileStream);
             string endpoint = _settings.Endpoint;
             string key = _settings.Key;
+
             // Create grabber.
             FrameGrabber<DetectedFace[]> grabber = new FrameGrabber<DetectedFace[]>();
 
