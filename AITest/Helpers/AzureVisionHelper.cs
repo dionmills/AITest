@@ -43,7 +43,9 @@ namespace AITest.Helpers
                 bin,
                 VisualFeatures.Caption
                 | VisualFeatures.Read
-                | VisualFeatures.Tags,
+                | VisualFeatures.Tags
+                | VisualFeatures.Objects
+                | VisualFeatures.People,
                 new ImageAnalysisOptions { GenderNeutralCaption = true });
 
             return result;
