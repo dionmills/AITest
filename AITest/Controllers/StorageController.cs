@@ -20,5 +20,10 @@ namespace AITest.Controllers
             Stream stream = video.First().OpenReadStream();
             return Ok(await _blobService.UploadFileAsync(stream));
         }
+        [HttpGet("Videos")]
+        public IActionResult GetVideos()
+        {
+            return Ok(_blobService.GetBlobs());
+        }
     }
 }

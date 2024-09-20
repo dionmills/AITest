@@ -10,6 +10,7 @@ using Azure.Storage.Blobs.Models;
 using Azure.Storage.Sas;
 using System.IO.Pipes;
 using Azure;
+using System.Collections.Generic;
 
 namespace Hackathon.AI.Services
 {
@@ -58,6 +59,12 @@ namespace Hackathon.AI.Services
             var result = await blobClient.UploadAsync(fileStream, true);
 
             return GetBlobSasUri(blobClient);
+        }
+
+        public IEnumerable<string> GetBlobs()
+        {
+            IEnumerable<BlobItem> blobs = (_containerClient.GetBlobsAsync()).ToBlockingEnumerable();
+            return blobs.ToList().Select(b => $"{_settings.SasUri}/{b.Name}?{_settings.SasToken}");
         }
 
         private string GetBlobSasUri(BlobClient blobClient)

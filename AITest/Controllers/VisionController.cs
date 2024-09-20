@@ -54,7 +54,7 @@ public class VisionController : ControllerBase
         }
 
         KeyValuePair<VideoMetadata, VideoIndexStateModel> result = await _videoRetrievalService.AddVideoToIndex(index, videoUrl, injestion, injestion);
-        //IEnumerable<ImageAnalysisResult> result = await _vision.AnalyseVideo(video);
+
         await Task.Delay(1000);
         bool finished = false;
         while (!finished)
