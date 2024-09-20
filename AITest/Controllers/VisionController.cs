@@ -128,12 +128,10 @@ public class VisionController : ControllerBase
     {
         Dictionary<string, double> tests = new Dictionary<string, double>
         {
-            { "forklift crashes and causes objects to fall quickly to the ground",39},
             { "2 people using a forklift truck",39 },
             { "objects fall and break apart",39 },
-            { "a person strikes another person",39 },
+            { "a person strikes another person",30 },
             { "a person placing an object in their pocket",39 },
-            { "person not sitting in forklift but in contact with forklift",39 },
             { "smoke or fire or explosion",21 }
         };
 
