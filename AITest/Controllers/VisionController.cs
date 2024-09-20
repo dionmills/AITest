@@ -124,7 +124,7 @@ public class VisionController : ControllerBase
     }
 
     [HttpGet("VideoConcerns")]
-    public async Task<IActionResult> AnalyseAisleVideo(string documentId)
+    public async Task<IActionResult> AnalyseVideo(string documentId)
     {
         Dictionary<string, double> tests = new Dictionary<string, double>
         {
