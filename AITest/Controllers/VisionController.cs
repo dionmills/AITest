@@ -2,6 +2,8 @@ using AITest.Helpers;
 using AITest.Services;
 using Azure.AI.Vision.ImageAnalysis;
 using Azure.Identity;
+using Azure.Storage.Blobs.Models;
+using Hackathon.AI.Models;
 using Hackathon.AI.Models.Api;
 using Hackathon.AI.Models.Settings;
 using Hackathon.AI.OpenAI;
@@ -11,6 +13,7 @@ using Microsoft.OpenApi;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
+using System.Collections.Generic;
 using System.Diagnostics.Eventing.Reader;
 using System.Net;
 using System.Text.Json;
@@ -118,5 +121,31 @@ public class VisionController : ControllerBase
     {
         return Ok(await _videoRetrievalService.CreateIndex(indexName));
 
+    }
+
+    [HttpGet("VideoConcerns")]
+    public async Task<IActionResult> AnalyseAisleVideo(string documentId)
+    {
+        Dictionary<string, double> tests = new Dictionary<string, double>
+        {
+            { "forklift crashes and causes objects to fall quickly to the ground",39},
+            { "2 people using a forklift truck",39 },
+            { "objects fall and break apart",39 },
+            { "a person strikes another person",39 },
+            { "a person placing an object in their pocket",39 },
+            { "person not sitting in forklift but in contact with forklift",39 },
+            { "smoke or fire or explosion",21 }
+        };
+
+        List<VideoTestModel> outcomes = new List<VideoTestModel>();
+
+        foreach (KeyValuePair<string,double> test in tests)
+        {
+            IEnumerable<VisionQueryResponseModel> query = await _videoRetrievalService.SearchWithVisionFeature(test.Key, "aisle-entry-index", documentId);
+            double confidence = query.Max(q => q.Relevance)*100;
+            outcomes.Add(new VideoTestModel { Confidence = confidence, Query = test.Key, MinimumConfidence = test.Value });
+            await Task.Delay(5000);
+        }
+        return Ok(outcomes.Where(o => o.Confidence > o.MinimumConfidence).Select(o => o.Query));
     }
 }

@@ -177,5 +177,10 @@ namespace Hackathon.AI.OpenAI
             var ret = await result.Content.ReadFromJsonAsync<ApiResponse<IEnumerable<VisionQueryResponseModel>>>();
             return ret.Value;
         }
+
+        public async Task SearchWithVisionFeature(object queryText, object indexName, string documentId)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
