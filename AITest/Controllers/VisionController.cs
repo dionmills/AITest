@@ -43,11 +43,16 @@ public class VisionController : ControllerBase
         return Ok(result);
     }
     [HttpPost("Video")]
-    public async Task<IActionResult> Video(string videoUrl = "https://tmpfiles.org/dl/13027223/wvideo.mp4")
+    public async Task<IActionResult> Video(string videoUrl, string indexName)
     {
         string injestion = Guid.NewGuid().ToString("N");
-        IEnumerable<Hackathon.AI.Models.Api.IngestionIndexModel> indexes = await _videoRetrievalService.ListIndexes();
-        IngestionIndexModel index = indexes.First();
+        IEnumerable<Hackathon.AI.Models.Api.IngestionIndexModel> indexes = (await _videoRetrievalService.ListIndexes())?? new List<IngestionIndexModel>();
+        IngestionIndexModel? index = indexes.FirstOrDefault(i => i.Name == indexName);
+        if (index == null)
+        {
+            return NotFound($"Index does not exist: {indexName}");
+        }
+
         KeyValuePair<VideoMetadata, VideoIndexStateModel> result = await _videoRetrievalService.AddVideoToIndex(index, videoUrl, injestion, injestion);
         //IEnumerable<ImageAnalysisResult> result = await _vision.AnalyseVideo(video);
         await Task.Delay(1000);

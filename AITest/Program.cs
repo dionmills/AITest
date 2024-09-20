@@ -5,6 +5,7 @@ using Microsoft.SemanticKernel.Connectors.OpenAI;
 using Hackathon.AI.Models.Settings;
 using AITest.Helpers;
 using Hackathon.AI.OpenAI;
+using Hackathon.AI.Services;
 
 namespace AITest;
 
@@ -28,7 +29,9 @@ public class Program
         builder.Services.AddSingleton<ChatHistoryService>();
         builder.Services.AddTransient<AzureVisionHelper>();
         builder.Services.AddTransient<VideoRetrievalService>();
+        builder.Services.AddTransient<BlobStorageService>();
         builder.Services.Configure<OpenAISettings>(builder.Configuration.GetSection("OpenAI"));
+        builder.Services.Configure<AzureBlobStorageSettings>(builder.Configuration.GetSection("BlobStorage"));
 
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();

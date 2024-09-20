@@ -9,7 +9,6 @@ using System.Threading.Tasks;
 using Hackathon.AI.Models.Api;
 using Hackathon.AI.Models.Settings;
 using Microsoft.Extensions.Options;
-using OpenCvSharp;
 
 namespace Hackathon.AI.OpenAI
 {

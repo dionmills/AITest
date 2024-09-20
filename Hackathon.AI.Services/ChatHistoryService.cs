@@ -1,6 +1,6 @@
 ﻿using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
-using AITest.Helpers;
+//using AITest.Helpers;
 
 namespace AITest.Services;
 
@@ -30,7 +30,7 @@ public class ChatHistoryService
         ChatMessageContentItemCollection message =
         [
             new TextContent(textContent),
-            new ImageContent(data: imageUri.ToReadOnlyMemory(),"image/png")
+            //new ImageContent(data: imageUri.ToReadOnlyMemory(),"image/png")
         ];
 
         _chatHistories[sessionId].AddUserMessage(message);
